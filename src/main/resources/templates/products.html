@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Справочник лекарственных препаратов</title>
+  <link rel="stylesheet" type="text/css" href="/css/styles.css">
+</head>
+<body>
+
+<h1 style="text-align: center;">Справочник лекарственных препаратов</h1>
+
+<div class="add-form">
+  <h2>Добавить новый лекарственный препарат</h2>
+  <form id="add-form">
+    <label for="product-name">Название лекарственного препарата</label><br>
+    <input type="text" id="product-name"><br>
+    <label for="category-id">Категория лекарственного препарата</label><br>
+    <select id="category-id">
+      <option th:each="category : ${categories}" th:value="${category.id}" th:utext="${category.name}"></option>
+    </select><br><br>
+    <label for="form-id">Лекарственная форма препарата</label><br>
+    <select id="form-id">
+      <option th:each="form : ${forms}" th:value="${form.id}" th:text="${form.name}"></option>
+    </select><br><br>
+    <label for="expiration-days">Срок годности препарата (в днях)</label><br>
+    <input type="number" id="expiration-days"><br><br>
+    <label for="is-vital">Входит ли препарат в перечень ЖНВЛП?</label>
+    <input type="checkbox" id="is-vital" style="transform: scale(1.1);"><br><br>
+    <label for="is-prescriptive">Является ли препарат рецептурным?</label>
+    <input type="checkbox" id="is-prescriptive" style="transform: scale(1.1);"><br><br>
+    <label for="accounting-type-id">Подлежит ли препарат предметно-количественному учёту?</label><br>
+    <select id="accounting-type-id">
+      <option th:each="accountingType : ${accountingTypes}" th:value="${accountingType.id}" th:text="${accountingType.name}"></option>
+    </select><br><br><br>
+    <button type="submit">Добавить</button>
+  </form>
+</div>
+
+<div style="margin-top: 60px;"></div>
+
+<div>
+  <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Поиск по полям препарата...">
+</div>
+
+<div style="margin-top: 20px;"></div>
+
+<table id="records-table">
+  <thead>
+  <tr>
+    <th onclick="sortTable(0)">ID</th>
+    <th onclick="sortTable(1)">Название</th>
+    <th onclick="sortTable(2)">Фармакологическая группа</th>
+    <th onclick="sortTable(3)">Лекарственная форма</th>
+    <th onclick="sortTable(4)">Срок годности (дни)</th>
+    <th onclick="sortTable(5)">ЖНВЛП?</th>
+    <th onclick="sortTable(6)">Рецептурный?</th>
+    <th onclick="sortTable(7)">ПКУ?</th>
+    <th>Действия</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="product : ${products}">
+    <td th:text="${product.id}"></td>
+    <td th:text="${product.name}" ondblclick="enableEdit(this, '/products/', 'name')"></td>
+    <td>
+      <select onchange="updateSelected(this, '/products/', 'categoryId')">
+        <option th:each="category : ${categories}" th:value="${category.id}" th:utext="${category.name}" th:selected="${category.id eq product.category.id}"></option>
+      </select>
+    </td>
+    <td>
+      <select onchange="updateSelected(this, '/products/', 'formId')">
+        <option th:each="form : ${forms}" th:value="${form.id}" th:text="${form.name}" th:selected="${form.id eq product.form.id}"></option>
+      </select>
+    </td>
+    <td th:text="${product.expirationDays}" ondblclick="enableEdit(this, '/products/', 'expirationDays')"></td>
+    <td>
+      <select onchange="updateSelected(this, '/products/', 'isVital')">
+        <option th:value="true" th:text="Да" th:selected="${product.isVital}"></option>
+        <option th:value="false" th:text="Нет" th:selected="${!product.isVital}"></option>
+      </select>
+    </td>
+    <td>
+      <select onchange="updateSelected(this, '/products/', 'isPrescriptive')">
+        <option th:value="true" th:text="Да" th:selected="${product.isPrescriptive}"></option>
+        <option th:value="false" th:text="Нет" th:selected="${!product.isPrescriptive}"></option>
+      </select>
+    </td>
+    <td>
+      <select onchange="updateSelected(this, '/products/', 'accountingTypeId')">
+        <option th:each="accountingType : ${accountingTypes}" th:value="${accountingType.id}" th:text="${accountingType.name}" th:selected="${accountingType.id eq product.accountingType.id}"></option>
+      </select>
+    </td>
+    <td><button class="delete-button" onclick="deleteRecord(this, '/products/')">Удалить</button></td>
+  </tr>
+  </tbody>
+</table>
+
+<div style="text-align: center;">
+  <a href="/home" class="home-button">Домой</a>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+  document.getElementById("add-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    var productName = document.getElementById("product-name").value.trim();
+    var productCategoryId = document.getElementById("category-id").value;
+    var productFormId = document.getElementById("form-id").value;
+    var productAccountingTypeId = document.getElementById("accounting-type-id").value;
+    var productExpirationDays = document.getElementById("expiration-days").value;
+    var productIsVital = document.getElementById("is-vital").checked.toString();
+    var productIsPrescriptive = document.getElementById("is-prescriptive").checked.toString();
+
+    var requestBody = {
+      name: productName,
+      categoryId: productCategoryId,
+      formId: productFormId,
+      accountingTypeId: productAccountingTypeId,
+      expirationDays: productExpirationDays,
+      isVital: productIsVital,
+      isPrescriptive: productIsPrescriptive
+    };
+
+    sendPostRequest(requestBody, '/products');
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Записи о списании препаратов</title>
+  <link rel="stylesheet" type="text/css" href="/css/styles.css">
+</head>
+<body>
+
+<h1 style="text-align: center;">Записи о списании препаратов</h1>
+
+<div style="margin-top: 60px;"></div>
+
+<div>
+  <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Поиск по полям записи...">
+</div>
+
+<div style="margin-top: 20px;"></div>
+
+<table id="records-table">
+  <thead>
+  <tr>
+    <th onclick="sortTable(0)">ID</th>
+    <th onclick="sortTable(1)">Складской ID препарата</th>
+    <th onclick="sortTable(2)">Количество</th>
+    <th onclick="sortTable(3)">Дата записи</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="writtenOffRecord : ${writtenOffRecords}">
+    <td th:text="${writtenOffRecord.id}"></td>
+    <td th:text="${writtenOffRecord.storageProduct.id}"></td>
+    <td th:text="${writtenOffRecord.quantity}"></td>
+    <td th:text="${#temporals.format(writtenOffRecord.writtenOffAt, 'dd MMMM yyyy, HH:mm')}"></td>
+  </tr>
+  </tbody>
+</table>
+
+<div style="text-align: center;">
+  <a href="/home" class="home-button">Домой</a>
+</div>
+
+<script src="/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Обзор и управление складом</title>
+  <link rel="stylesheet" type="text/css" href="/css/styles.css">
+</head>
+<body>
+
+<h1 style="text-align: center;">Обзор и управление складом</h1>
+
+<div class="add-form">
+  <h2>Оприходовать новый препарат</h2>
+  <form id="add-form">
+    <label for="product-id">Препарат</label><br>
+    <select id="product-id">
+      <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
+    </select><br><br>
+    <label for="supplier-id">Поставщик</label><br>
+    <select id="supplier-id">
+      <option th:each="supplier : ${suppliers}" th:value="${supplier.id}" th:text="${supplier.name}"></option>
+    </select><br><br>
+    <label for="quantity">Количество (шт.)</label><br>
+    <input type="number" id="quantity"><br><br>
+    <label for="price-bought">Закупочная цена (за шт.)</label><br>
+    <input type="number" id="price-bought"><br><br>
+    <label for="manufactured-on">Дата изготовления</label><br>
+    <input type="datetime-local" id="manufactured-on"><br><br><br>
+    <button type="submit">Добавить</button>
+  </form>
+</div>
+
+<div style="margin-top: 60px;"></div>
+
+<div class="container">
+  <div>
+    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Поиск по полям записи...">
+  </div>
+  <div>
+    <label for="show-zero-quantity">Показать неактивные записи?</label>
+    <input type="checkbox" checked id="show-zero-quantity" style="transform: scale(1.1);" onchange="toggleZeroQuantity()">
+  </div>
+</div>
+
+<div style="margin-top: 20px;"></div>
+
+<table id="records-table">
+  <thead>
+  <tr>
+    <th onclick="sortTable(0)">ID</th>
+    <th onclick="sortTable(1)">Препарат</th>
+    <th onclick="sortTable(2)">Поставщик</th>
+    <th onclick="sortTable(3)">Количество</th>
+    <th onclick="sortTable(4)">Срок годности истекает:</th>
+    <th>Действия</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="storageProduct : ${storageProducts}">
+    <td th:text="${storageProduct.id}"></td>
+    <td th:text="${storageProduct.product.name}"></td>
+    <td th:text="${storageProduct.supplier.name}"></td>
+    <td th:text="${storageProduct.quantity}"></td>
+    <td th:text="${#temporals.format(storageProduct.expiresAt, 'dd MMMM yyyy, HH:mm')}"></td>
+    <td>
+      <button class="sell-button" onclick="sellProduct(this)">Продать...</button>
+      <button class="write-off-button" onclick="writeOffProduct(this)">Списать...</button>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<div style="text-align: center;">
+  <a href="/home" class="home-button">Домой</a>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+  document.getElementById("add-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    var storageProductId = document.getElementById("product-id").value;
+    var storageSupplierId = document.getElementById("supplier-id").value;
+    var storageQuantity = document.getElementById("quantity").value;
+    var storagePriceBought = document.getElementById("price-bought").value;
+    var storageManufacturedOn = document.getElementById("manufactured-on").value;
+
+    var requestBody = {
+      productId: storageProductId,
+      supplierId: storageSupplierId,
+      quantity: storageQuantity,
+      priceBought: storagePriceBought,
+      manufacturedOn: storageManufacturedOn
+    };
+
+    sendPostRequest(requestBody, '/storage');
+  });
+
+
+  function sendPutRequest(requestBody, storageProductId) {
+      fetch('/storage/' + storageProductId, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(errorData => {
+            var errorMessage = errorData.message;
+            throw new Error(errorMessage);
+          });
+        }
+        window.location.reload();
+      })
+      .catch(error => {
+        alert('Ошибка при операции: ' + error.message);
+      });
+  }
+
+
+  function sellProduct(button) {
+    var row = button.parentNode.parentNode;
+    var storageProductId = row.cells[0].innerText;
+    var productName = row.cells[1].innerText;
+    var productQuantity = parseInt(row.cells[3].innerText, 10);
+
+    var requestedQuantity = parseInt(prompt("Сколько штук вы хотите продать?", ""), 10);
+    if (requestedQuantity === null || requestedQuantity === "") {
+        return;
+    }
+
+    if (requestedQuantity > productQuantity) {
+        alert("Количество не должно превышать того, что на складе!");
+        return;
+    }
+
+
+    var pricePerUnit = parseFloat(prompt("По какой цене/штука вы хотите продать товар?", ""));
+    if (pricePerUnit === null || pricePerUnit === "") {
+        return;
+    }
+
+
+    var confirmSell = confirm("Вы уверены, что хотите продать " + requestedQuantity + " штук товара '" + productName + "' по цене " + pricePerUnit + " за штуку со склада?");
+    if (confirmSell) {
+        var requestBody = {
+            type: 'sold',
+            quantity: requestedQuantity,
+            priceSold: pricePerUnit
+        };
+
+        sendPutRequest(requestBody, storageProductId);
+    }
+  }
+
+
+  function writeOffProduct(button) {
+    var row = button.parentNode.parentNode;
+    var storageProductId = row.cells[0].innerText;
+    var productName = row.cells[1].innerText;
+    var productQuantity = parseInt(row.cells[3].innerText, 10);
+
+    var requestedQuantity = parseInt(prompt("Сколько штук вы хотите списать?", ""), 10);
+    if (requestedQuantity === null || requestedQuantity === "") {
+        return;
+    }
+
+    if (requestedQuantity > productQuantity) {
+        alert("Количество не должно превышать того, что на складе!");
+        return;
+    }
+
+
+    var confirmSell = confirm("Вы уверены, что хотите списать " + requestedQuantity + " штук товара '" + productName + "' со склада?");
+    if (confirmSell) {
+        var requestBody = {
+            type: 'writtenOff',
+            quantity: requestedQuantity
+        };
+
+        sendPutRequest(requestBody, storageProductId);
+    }
+  }
+
+
+  function toggleZeroQuantity() {
+    var showZeroQuantity = document.getElementById("show-zero-quantity").checked;
+    var tableRows = document.getElementById("records-table").getElementsByTagName("tr");
+
+    for (var i = 1; i < tableRows.length; i++) {
+      var quantityCell = tableRows[i].getElementsByTagName("td")[3];
+      var quantity = parseInt(quantityCell.innerText.trim(), 10);
+
+      if (quantity === 0 && !showZeroQuantity) {
+        tableRows[i].style.display = "none";
+      } else {
+        tableRows[i].style.display = "";
+      }
+    }
+  }
+</script>
+</body>
+</html>
