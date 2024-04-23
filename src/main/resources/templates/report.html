@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчётность по наличию</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav>
+    <div class="nav-left">
+        <span th:text="'Здравствуйте, ' + ${username} + '!'"></span>
+    </div>
+    <div class="nav-right">
+        <a href="/logout">
+            <button>Выйти</button>
+        </a>
+    </div>
+</nav>
+
+<h1 style="text-align: center;">Отчётность по наличию</h1>
+
+<div class="add-form">
+    <label for="product-id">Выберите препарат, для которого нужно произвести отчётность:</label><br>
+    <select id="product-id">
+        <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
+    </select><br><br>
+</div>
+
+<div style="margin-top: 60px;"></div>
+
+<div class="add-form">
+    <div id="chart-container">
+        <canvas id="outflow-chart"></canvas>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="/home" class="home-button">Домой</a>
+</div>
+
+<script>
+    var myChart;
+
+    function getPredictionData() {
+      var productId = document.getElementById("product-id").value;
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+              if (xhr.status === 200) {
+                  var response = JSON.parse(xhr.responseText);
+
+                  if (myChart) {
+                      myChart.destroy();
+                  }
+
+                  var ctx = document.getElementById('outflow-chart').getContext('2d');
+                  myChart = new Chart(ctx, {
+                      type: 'line',
+                      data: {
+                          labels: response.labels,
+                          datasets: [{
+                              label: 'Препарата на складе',
+                              data: response.outflowValues,
+                              borderColor: 'rgb(75, 192, 192)',
+                              tension: 0.1
+                          }]
+                      },
+                      options: {
+                          scales: {
+                              y: {
+                                  beginAtZero: true
+                              }
+                          }
+                      }
+                  });
+
+                  myChart.update();
+              } else {
+                  console.error('Ошибка при выполнении запроса:', xhr.status);
+              }
+          }
+      };
+      xhr.open('GET', '/report-product/' + productId);
+      xhr.send();
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+      getPredictionData();
+    });
+
+
+    document.getElementById('product-id').addEventListener('change', function() {
+      getPredictionData();
+    });
+</script>
+</body>
+</html>

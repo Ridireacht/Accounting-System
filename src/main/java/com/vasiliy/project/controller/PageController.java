@@ -62,6 +62,13 @@ public class PageController {
     return "storage";
   }
 
+  @GetMapping("/reports")
+  public String getReports(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
+    model.addAttribute("products", productService.getAllProducts());
+    return "report";
+  }
+
   @GetMapping("/storage/inflow")
   public String getInflowRecords(Model model) {
     model.addAttribute("username", authService.getCurrentUserUsername());
