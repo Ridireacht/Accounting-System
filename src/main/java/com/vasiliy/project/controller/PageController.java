@@ -20,27 +20,32 @@ public class PageController {
   private final SupplierService supplierService;
   private final ProductService productService;
   private final StorageProductService storageProductService;
+  private final AuthService authService;
 
 
   @GetMapping("/home")
-  public String getHome() {
+  public String getHome(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     return "home";
   }
 
   @GetMapping("/categories")
   public String getCategories(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("categories", categoryService.getAllCategories());
     return "categories";
   }
 
   @GetMapping("/suppliers")
   public String getSuppliers(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("suppliers", supplierService.getAllSuppliers());
     return "suppliers";
   }
 
   @GetMapping("/products")
   public String getProducts(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("categories", categoryService.getAllCategoriesWithNbsp());
     model.addAttribute("forms", formService.getAllForms());
     model.addAttribute("accountingTypes", accountingTypeService.getAllAccountingTypes());
@@ -50,6 +55,7 @@ public class PageController {
 
   @GetMapping("/storage")
   public String getStorage(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("products", productService.getAllProducts());
     model.addAttribute("suppliers", supplierService.getAllSuppliers());
     model.addAttribute("storageProducts", storageProductService.getAllStorageProducts());
@@ -58,36 +64,42 @@ public class PageController {
 
   @GetMapping("/storage/inflow")
   public String getInflowRecords(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("inflowRecords", storageProductService.getAllInflowRecords());
     return "inflow";
   }
 
   @GetMapping("/storage/sold")
   public String getSoldRecords(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("soldRecords", storageProductService.getAllSoldRecords());
     return "sold";
   }
 
   @GetMapping("/storage/written-off")
   public String getWrittenOffRecords(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("writtenOffRecords", storageProductService.getAllWrittenOffRecords());
     return "written-off";
   }
 
   @GetMapping("/prediction-product")
   public String getPredictionProduct(Model model) {
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("products", productService.getAllProducts());
     return "prediction-product";
   }
 
   @GetMapping("/prediction-category")
   public String getPredictionGroup(Model model) {
+
     List<Category> categories = categoryService.getAllCategories();
 
     categories = categories.stream()
             .filter(category -> !category.getProducts().isEmpty())
             .collect(Collectors.toList());
-    
+
+    model.addAttribute("username", authService.getCurrentUserUsername());
     model.addAttribute("categories", categories);
     return "prediction-category";
   }
