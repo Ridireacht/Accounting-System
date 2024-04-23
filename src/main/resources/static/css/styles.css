@@ -5,6 +5,24 @@ h1 {
   margin-bottom: 50px;
 }
 
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.nav-left {
+    margin-right: auto;
+}
+
+.nav-right {
+    margin-left: auto;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
