@@ -5,6 +5,8 @@
     <title>Отчётность по наличию</title>
     <link rel="stylesheet" type="text/css" href="/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <nav>
@@ -39,60 +41,114 @@
     <a href="/home" class="home-button">Домой</a>
 </div>
 
+<div style="text-align: center; margin-top: 20px;">
+    <button id="download-pdf">Скачать отчёт</button>
+</div>
+
 <script>
     var myChart;
 
     function getPredictionData() {
-      var productId = document.getElementById("product-id").value;
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function() {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-              if (xhr.status === 200) {
-                  var response = JSON.parse(xhr.responseText);
+        var productId = document.getElementById("product-id").value;
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
 
-                  if (myChart) {
-                      myChart.destroy();
-                  }
+                    if (myChart) {
+                        myChart.destroy();
+                    }
 
-                  var ctx = document.getElementById('outflow-chart').getContext('2d');
-                  myChart = new Chart(ctx, {
-                      type: 'line',
-                      data: {
-                          labels: response.labels,
-                          datasets: [{
-                              label: 'Препарата на складе',
-                              data: response.outflowValues,
-                              borderColor: 'rgb(75, 192, 192)',
-                              tension: 0.1
-                          }]
-                      },
-                      options: {
-                          scales: {
-                              y: {
-                                  beginAtZero: true
-                              }
-                          }
-                      }
-                  });
+                    var ctx = document.getElementById('outflow-chart').getContext('2d');
+                    myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: response.labels,
+                            datasets: [{
+                                label: 'Препарата на складе',
+                                data: response.outflowValues,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
 
-                  myChart.update();
-              } else {
-                  console.error('Ошибка при выполнении запроса:', xhr.status);
-              }
-          }
-      };
-      xhr.open('GET', '/report-product/' + productId);
-      xhr.send();
+                    myChart.update();
+                } else {
+                    console.error('Ошибка при выполнении запроса:', xhr.status);
+                }
+            }
+        };
+        xhr.open('GET', '/report-product/' + productId);
+        xhr.send();
     }
 
-
     document.addEventListener("DOMContentLoaded", function() {
-      getPredictionData();
+        getPredictionData();
     });
 
-
     document.getElementById('product-id').addEventListener('change', function() {
-      getPredictionData();
+        getPredictionData();
+    });
+
+    document.getElementById('download-pdf').addEventListener('click', function() {
+        const { jsPDF } = window.jspdf;
+        const content = document.getElementById('chart-container');
+        const nav = document.querySelector('nav');
+        const homeButton = document.querySelector('.home-button');
+        const downloadButton = document.getElementById('download-pdf');
+        const addForm = document.querySelector('.add-form');
+        const selectedProductId = document.getElementById('product-id').value;
+
+        // Сохраняем исходное содержимое add-form
+        const originalAddFormContent = addForm.cloneNode(true);
+
+        // Скрываем лишнее
+        nav.style.display = 'none';
+        homeButton.style.display = 'none';
+        downloadButton.style.display = 'none';
+
+        // Получаем название выбранного препарата
+        const selectedProduct = document.querySelector('#product-id option:checked').textContent;
+
+        // Заменяем содержимое add-form на название препарата
+        addForm.innerHTML = `<h2>Рассматриваемый препарат: ${selectedProduct}</h2>`;
+
+        // Захват содержимого страницы
+        html2canvas(document.body).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save('report.pdf');
+
+            // Возвращаем скрытые элементы
+            nav.style.display = '';
+            homeButton.style.display = '';
+            downloadButton.style.display = '';
+
+            // Восстанавливаем исходное содержимое add-form
+            addForm.parentNode.replaceChild(originalAddFormContent, addForm);
+
+            // Восстанавливаем исходное значение выбранного элемента
+            document.getElementById('product-id').value = selectedProductId;
+
+            // Повторно добавляем обработчики событий
+            document.getElementById('product-id').addEventListener('change', function() {
+                getPredictionData();
+            });
+        });
     });
 </script>
 </body>
