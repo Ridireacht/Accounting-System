@@ -131,6 +131,18 @@
         canvas.style.height = '100vh';
         myChart.resize();
 
+        // Отключаем стили background-color и border
+        const addFormElements = document.querySelectorAll('.add-form');
+        const originalStyles = [];
+        addFormElements.forEach(element => {
+            originalStyles.push({
+                backgroundColor: element.style.backgroundColor,
+                border: element.style.border
+            });
+            element.style.backgroundColor = 'none';
+            element.style.border = 'none';
+        });
+
         // Захват содержимого страницы
         html2canvas(document.body).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
@@ -157,6 +169,12 @@
             canvas.style.width = originalWidth;
             canvas.style.height = originalHeight;
             myChart.resize();
+
+            // Восстанавливаем стили background-color и border
+            addFormElements.forEach((element, index) => {
+                element.style.backgroundColor = originalStyles[index].backgroundColor;
+                element.style.border = originalStyles[index].border;
+            });
         });
     });
 </script>
