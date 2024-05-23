@@ -22,7 +22,7 @@
 
 <h1 style="text-align: center;">Отчётность по наличию</h1>
 
-<div class="add-form">
+<div class="add-form" id="form">
     <label for="product-id">Выберите препарат, для которого нужно произвести отчётность:</label><br>
     <select id="product-id">
         <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
@@ -103,24 +103,23 @@
         const { jsPDF } = window.jspdf;
         const content = document.getElementById('chart-container');
         const nav = document.querySelector('nav');
+        const h1 = document.querySelector('h1');
         const homeButton = document.querySelector('.home-button');
         const downloadButton = document.getElementById('download-pdf');
-        const addForm = document.querySelector('.add-form');
+        const form = document.getElementById('form');
         const selectedProductId = document.getElementById('product-id').value;
-
-        // Сохраняем исходное содержимое add-form
-        const originalAddFormContent = addForm.cloneNode(true);
 
         // Скрываем лишнее
         nav.style.display = 'none';
         homeButton.style.display = 'none';
         downloadButton.style.display = 'none';
+        form.style.display = 'none';
 
         // Получаем название выбранного препарата
         const selectedProduct = document.querySelector('#product-id option:checked').textContent;
 
-        // Заменяем содержимое add-form на название препарата
-        addForm.innerHTML = `<h2>Рассматриваемый препарат: ${selectedProduct}</h2>`;
+        // Заменяем подпись отчёта
+        h1.innerHTML = `Отчётность по наличию на складе препарата "${selectedProduct}"`
 
         // Захват содержимого страницы
         html2canvas(document.body).then(canvas => {
@@ -133,21 +132,14 @@
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save('report.pdf');
 
+            // Возвращаем оригинальную подпись
+            h1.innerHTML = `Отчётность по наличию`;
+
             // Возвращаем скрытые элементы
             nav.style.display = '';
             homeButton.style.display = '';
             downloadButton.style.display = '';
-
-            // Восстанавливаем исходное содержимое add-form
-            addForm.parentNode.replaceChild(originalAddFormContent, addForm);
-
-            // Восстанавливаем исходное значение выбранного элемента
-            document.getElementById('product-id').value = selectedProductId;
-
-            // Повторно добавляем обработчики событий
-            document.getElementById('product-id').addEventListener('change', function() {
-                getPredictionData();
-            });
+            form.style.display = '';
         });
     });
 </script>
