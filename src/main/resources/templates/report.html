@@ -102,6 +102,7 @@
     document.getElementById('download-pdf').addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
         const content = document.getElementById('chart-container');
+        const canvas = document.getElementById('outflow-chart');
         const nav = document.querySelector('nav');
         const h1 = document.querySelector('h1');
         const homeButton = document.querySelector('.home-button');
@@ -119,7 +120,16 @@
         const selectedProduct = document.querySelector('#product-id option:checked').textContent;
 
         // Заменяем подпись отчёта
-        h1.innerHTML = `Отчётность по наличию на складе препарата "${selectedProduct}"`
+        h1.innerHTML = `Отчётность по наличию на складе препарата "${selectedProduct}"`;
+
+        // Увеличиваем график на всю страницу
+        const originalWidth = canvas.style.width;
+        const originalHeight = canvas.style.height;
+        content.style.width = '100%';
+        content.style.height = '100vh';
+        canvas.style.width = '100%';
+        canvas.style.height = '100vh';
+        myChart.resize();
 
         // Захват содержимого страницы
         html2canvas(document.body).then(canvas => {
@@ -140,6 +150,13 @@
             homeButton.style.display = '';
             downloadButton.style.display = '';
             form.style.display = '';
+
+            // Возвращаем исходные размеры графика
+            content.style.width = '';
+            content.style.height = '';
+            canvas.style.width = originalWidth;
+            canvas.style.height = originalHeight;
+            myChart.resize();
         });
     });
 </script>
