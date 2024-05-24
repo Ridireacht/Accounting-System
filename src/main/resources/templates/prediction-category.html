@@ -58,8 +58,8 @@
           if (xhr.readyState === XMLHttpRequest.DONE) {
               if (xhr.status === 200) {
                   var response = JSON.parse(xhr.responseText);
-                  document.getElementById('nextWeekOutflowPrediction').textContent = response.nextWeekOutflowPrediction;
-                  document.getElementById('nextMonthOutflowPrediction').textContent = response.nextMonthOutflowPrediction;
+                  document.getElementById('nextWeekOutflowPrediction').textContent = response.nextWeekOutflowPrediction.toFixed(2);
+                  document.getElementById('nextMonthOutflowPrediction').textContent = response.nextMonthOutflowPrediction.toFixed(2);
 
                   if (window.myChart) {
                       myChart.destroy();
