@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PredictionDataDTO {
+public class PredictionProductDataDTO {
   private Double nextWeekOutflowPrediction;
   private Double nextMonthOutflowPrediction;
 

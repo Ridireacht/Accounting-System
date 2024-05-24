@@ -1,10 +1,9 @@
 package com.vasiliy.project.controller;
 
-import com.vasiliy.project.dto.info.PredictionDataDTO;
+import com.vasiliy.project.dto.info.PredictionCategoryDataDTO;
 import com.vasiliy.project.exception.CustomBadRequestException;
 import com.vasiliy.project.repository.CategoryRepository;
 import com.vasiliy.project.service.PredictionCategoryService;
-import com.vasiliy.project.service.PredictionProductService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +21,7 @@ public class PredictionCategoryController {
 
 
   @GetMapping("/{id}")
-  public PredictionDataDTO getPredictionResponse(@PathVariable("id") Long categoryId) {
+  public PredictionCategoryDataDTO getPredictionResponse(@PathVariable("id") Long categoryId) {
     if (!categoryRepository.existsById(categoryId)) {
       throw new CustomBadRequestException();
     }

@@ -1,6 +1,6 @@
 package com.vasiliy.project.service.impl;
 
-import com.vasiliy.project.dto.info.PredictionDataDTO;
+import com.vasiliy.project.dto.info.PredictionProductDataDTO;
 import com.vasiliy.project.entity.records.SoldRecord;
 import com.vasiliy.project.entity.records.WrittenOffRecord;
 import com.vasiliy.project.repository.SoldRecordRepository;
@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -24,7 +23,7 @@ public class PredictionProductServiceImpl implements PredictionProductService {
   private final SoldRecordRepository soldRecordRepository;
   private final WrittenOffRecordRepository writtenOffRecordRepository;
 
-  private final PredictionDataDTO predictionDataDTO = new PredictionDataDTO();
+  private final PredictionProductDataDTO predictionProductDataDTO = new PredictionProductDataDTO();
 
 
   @Override
@@ -76,7 +75,7 @@ public class PredictionProductServiceImpl implements PredictionProductService {
 
 
     // Сразу записываем результаты в респонс
-    predictionDataDTO.setOutflowValues(outflowValues);
+    predictionProductDataDTO.setOutflowValues(outflowValues);
 
 
     LocalDate endDate = endDateTime.toLocalDate().minusDays(1);
@@ -84,7 +83,7 @@ public class PredictionProductServiceImpl implements PredictionProductService {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     while (!currentDate.isAfter(endDate)) {
-      predictionDataDTO.getLabels().add(currentDate.format(formatter));
+      predictionProductDataDTO.getLabels().add(currentDate.format(formatter));
       currentDate = currentDate.plusDays(1);
     }
 
@@ -93,15 +92,15 @@ public class PredictionProductServiceImpl implements PredictionProductService {
   }
 
   @Override
-  public PredictionDataDTO getPredictionDTO(Long productId, Integer numberOfLastWeeks) {
+  public PredictionProductDataDTO getPredictionDTO(Long productId, Integer numberOfLastWeeks) {
     int currentOutflowValue;
     List<Integer> weekOutflowValues = new ArrayList<>();
     List<Integer> monthOutflowValues = new ArrayList<>();
 
-    predictionDataDTO.setLabels(new ArrayList<>());
-    predictionDataDTO.setOutflowValues(new ArrayList<>());
-    predictionDataDTO.setNextWeekOutflowPrediction(null);
-    predictionDataDTO.setNextMonthOutflowPrediction(null);
+    predictionProductDataDTO.setLabels(new ArrayList<>());
+    predictionProductDataDTO.setOutflowValues(new ArrayList<>());
+    predictionProductDataDTO.setNextWeekOutflowPrediction(null);
+    predictionProductDataDTO.setNextMonthOutflowPrediction(null);
 
 
     // Собираем данные о расходе товара за последние numberOfLastWeeks недель
@@ -110,13 +109,13 @@ public class PredictionProductServiceImpl implements PredictionProductService {
 
     // Если список пустой, то и анализировать нечего
     if (outflowValues.isEmpty()) {
-      predictionDataDTO.setNextWeekOutflowPrediction(0.0);
-      predictionDataDTO.setNextMonthOutflowPrediction(0.0);
+      predictionProductDataDTO.setNextWeekOutflowPrediction(0.0);
+      predictionProductDataDTO.setNextMonthOutflowPrediction(0.0);
 
-      predictionDataDTO.setLabels(new ArrayList<>());
-      predictionDataDTO.setOutflowValues(new ArrayList<>());
+      predictionProductDataDTO.setLabels(new ArrayList<>());
+      predictionProductDataDTO.setOutflowValues(new ArrayList<>());
 
-      return predictionDataDTO;
+      return predictionProductDataDTO;
     }
 
 
@@ -149,18 +148,18 @@ public class PredictionProductServiceImpl implements PredictionProductService {
 
 
     // Проводим прогнозирование на следующую неделю
-    predictionDataDTO.setNextWeekOutflowPrediction(getNextWeekPrediction(weekOutflowValues));
+    predictionProductDataDTO.setNextWeekOutflowPrediction(getNextWeekPrediction(weekOutflowValues));
 
 
     // Проводим прогнозирование на следующий месяц (если накопилось данных хотя бы на месяц)
     if (!monthOutflowValues.isEmpty()) {
-      predictionDataDTO.setNextMonthOutflowPrediction(getNextMonthPrediction(monthOutflowValues));
+      predictionProductDataDTO.setNextMonthOutflowPrediction(getNextMonthPrediction(monthOutflowValues));
     } else {
-      predictionDataDTO.setNextMonthOutflowPrediction(0.0);
+      predictionProductDataDTO.setNextMonthOutflowPrediction(0.0);
     }
 
 
-    return predictionDataDTO;
+    return predictionProductDataDTO;
   }
 
   @Override

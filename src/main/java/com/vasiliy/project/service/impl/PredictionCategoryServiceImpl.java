@@ -1,6 +1,6 @@
 package com.vasiliy.project.service.impl;
 
-import com.vasiliy.project.dto.info.PredictionDataDTO;
+import com.vasiliy.project.dto.info.PredictionCategoryDataDTO;
 import com.vasiliy.project.entity.info.Product;
 import com.vasiliy.project.entity.records.SoldRecord;
 import com.vasiliy.project.entity.records.WrittenOffRecord;
@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -26,7 +25,7 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
     private final WrittenOffRecordRepository writtenOffRecordRepository;
     private final ProductRepository productRepository;
 
-    private final PredictionDataDTO predictionDataDTO = new PredictionDataDTO();
+    private final PredictionCategoryDataDTO predictionCategoryDataDTO = new PredictionCategoryDataDTO();
 
 
     @Override
@@ -92,12 +91,24 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
         }
 
 
+        // Собираем и сохраняем названия препаратов
+        predictionCategoryDataDTO.setProductNames(new ArrayList<>());
+
+        for (Long id : productIds) {
+            predictionCategoryDataDTO.getProductNames().add(productRepository.findNameById(id));
+        }
+
+
         // Собираем информацию по расходу препаратов
         List<List<Integer>> outflowProductValueLists = new ArrayList<>();
 
         for (Long id : productIds) {
             outflowProductValueLists.add(collectOutflowValueByProduct(id, numberOfLastWeeks));
         }
+
+
+        // Сохраняем эти данные в DTO
+        predictionCategoryDataDTO.setOutflowValuesLists(outflowProductValueLists);
 
 
         // Собираем единый список по расходу фармакологической группы
@@ -116,17 +127,13 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
         }
 
 
-        // Сразу записываем результаты в респонс
-        predictionDataDTO.setOutflowValues(outflowValues);
-
-
         // Высчитываем labels для вывода графика и записываем их в респонс
         LocalDate endDate = endDateTime.toLocalDate().minusDays(1);
         LocalDate currentDate = endDate.minusDays(outflowValues.size() - 1);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         while (!currentDate.isAfter(endDate)) {
-            predictionDataDTO.getLabels().add(currentDate.format(formatter));
+            predictionCategoryDataDTO.getLabels().add(currentDate.format(formatter));
             currentDate = currentDate.plusDays(1);
         }
 
@@ -135,15 +142,15 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
     }
 
     @Override
-    public PredictionDataDTO getPredictionDTO(Long categoryId, Integer numberOfLastWeeks) {
+    public PredictionCategoryDataDTO getPredictionDTO(Long categoryId, Integer numberOfLastWeeks) {
         int currentOutflowValue;
         List<Integer> weekOutflowValues = new ArrayList<>();
         List<Integer> monthOutflowValues = new ArrayList<>();
 
-        predictionDataDTO.setLabels(new ArrayList<>());
-        predictionDataDTO.setOutflowValues(new ArrayList<>());
-        predictionDataDTO.setNextWeekOutflowPrediction(null);
-        predictionDataDTO.setNextMonthOutflowPrediction(null);
+        predictionCategoryDataDTO.setLabels(new ArrayList<>());
+        predictionCategoryDataDTO.setOutflowValuesLists(new ArrayList<>());
+        predictionCategoryDataDTO.setNextWeekOutflowPrediction(null);
+        predictionCategoryDataDTO.setNextMonthOutflowPrediction(null);
 
 
         // Собираем данные о расходе товара за последние numberOfLastWeeks недель
@@ -152,13 +159,14 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
 
         // Если список пустой, то и анализировать нечего
         if (outflowValues.isEmpty()) {
-            predictionDataDTO.setNextWeekOutflowPrediction(0.0);
-            predictionDataDTO.setNextMonthOutflowPrediction(0.0);
+            predictionCategoryDataDTO.setNextWeekOutflowPrediction(0.0);
+            predictionCategoryDataDTO.setNextMonthOutflowPrediction(0.0);
 
-            predictionDataDTO.setLabels(new ArrayList<>());
-            predictionDataDTO.setOutflowValues(new ArrayList<>());
+            predictionCategoryDataDTO.setLabels(new ArrayList<>());
+            predictionCategoryDataDTO.setProductNames(new ArrayList<>());
+            predictionCategoryDataDTO.setOutflowValuesLists(new ArrayList<>());
 
-            return predictionDataDTO;
+            return predictionCategoryDataDTO;
         }
 
 
@@ -190,18 +198,18 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
 
 
         // Проводим прогнозирование на следующую неделю
-        predictionDataDTO.setNextWeekOutflowPrediction(getNextWeekPrediction(weekOutflowValues));
+        predictionCategoryDataDTO.setNextWeekOutflowPrediction(getNextWeekPrediction(weekOutflowValues));
 
 
         // Проводим прогнозирование на следующий месяц (если накопилось данных хотя бы на месяц)
         if (!monthOutflowValues.isEmpty()) {
-            predictionDataDTO.setNextMonthOutflowPrediction(getNextMonthPrediction(monthOutflowValues));
+            predictionCategoryDataDTO.setNextMonthOutflowPrediction(getNextMonthPrediction(monthOutflowValues));
         } else {
-            predictionDataDTO.setNextMonthOutflowPrediction(0.0);
+            predictionCategoryDataDTO.setNextMonthOutflowPrediction(0.0);
         }
 
 
-        return predictionDataDTO;
+        return predictionCategoryDataDTO;
     }
 
     @Override

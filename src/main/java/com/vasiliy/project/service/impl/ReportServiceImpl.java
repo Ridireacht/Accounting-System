@@ -1,6 +1,5 @@
 package com.vasiliy.project.service.impl;
 
-import com.vasiliy.project.dto.info.PredictionDataDTO;
 import com.vasiliy.project.dto.info.ReportDataDTO;
 import com.vasiliy.project.entity.records.InflowRecord;
 import com.vasiliy.project.entity.records.SoldRecord;

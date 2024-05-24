@@ -52,48 +52,62 @@
   var myChart;
 
   function getPredictionData() {
-    var productId = document.getElementById("category-id").value;
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                document.getElementById('nextWeekOutflowPrediction').textContent = response.nextWeekOutflowPrediction;
-                document.getElementById('nextMonthOutflowPrediction').textContent = response.nextMonthOutflowPrediction;
+      var productId = document.getElementById("category-id").value;
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+              if (xhr.status === 200) {
+                  var response = JSON.parse(xhr.responseText);
+                  document.getElementById('nextWeekOutflowPrediction').textContent = response.nextWeekOutflowPrediction;
+                  document.getElementById('nextMonthOutflowPrediction').textContent = response.nextMonthOutflowPrediction;
 
-                if (myChart) {
-                    myChart.destroy();
-                }
+                  if (window.myChart) {
+                      myChart.destroy();
+                  }
 
-                var ctx = document.getElementById('outflow-chart').getContext('2d');
-                myChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: response.labels,
-                        datasets: [{
-                            label: 'Расход препаратов',
-                            data: response.outflowValues,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
+                  var ctx = document.getElementById('outflow-chart').getContext('2d');
 
-                myChart.update();
-            } else {
-                console.error('Ошибка при выполнении запроса:', xhr.status);
-            }
-        }
-    };
-    xhr.open('GET', '/prediction-category/' + productId);
-    xhr.send();
+                  // Создаем массив с данными для каждой линии
+                  var datasets = response.productNames.map((productName, index) => {
+                      return {
+                          label: productName,
+                          data: response.outflowValuesLists[index],
+                          borderColor: getRandomColor(),
+                          tension: 0.1
+                      };
+                  });
+
+                  window.myChart = new Chart(ctx, {
+                      type: 'line',
+                      data: {
+                          labels: response.labels,
+                          datasets: datasets
+                      },
+                      options: {
+                          scales: {
+                              y: {
+                                  beginAtZero: true
+                              }
+                          }
+                      }
+                  });
+
+              } else {
+                  console.error('Ошибка при выполнении запроса:', xhr.status);
+              }
+          }
+      };
+      xhr.open('GET', '/prediction-category/' + productId);
+      xhr.send();
+  }
+
+  function getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
   }
 
 

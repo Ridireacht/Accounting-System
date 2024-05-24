@@ -1,6 +1,6 @@
 package com.vasiliy.project.controller;
 
-import com.vasiliy.project.dto.info.PredictionDataDTO;
+import com.vasiliy.project.dto.info.PredictionProductDataDTO;
 import com.vasiliy.project.exception.CustomBadRequestException;
 import com.vasiliy.project.repository.ProductRepository;
 import com.vasiliy.project.service.PredictionProductService;
@@ -21,7 +21,7 @@ public class PredictionProductController {
 
 
   @GetMapping("/{id}")
-  public PredictionDataDTO getPredictionResponse(@PathVariable("id") Long productId) {
+  public PredictionProductDataDTO getPredictionResponse(@PathVariable("id") Long productId) {
     if (!productRepository.existsById(productId)) {
       throw new CustomBadRequestException();
     }
