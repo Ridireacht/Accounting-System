@@ -94,6 +94,47 @@ th:hover {
   background-color: #f9f9f9;
 }
 
+.add-form-form {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #dddddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: space-between;
+}
+
+.left-section {
+    flex: 1;
+    padding-right: 10px;
+}
+
+.left-section select {
+    flex: 1;
+    padding-right: 10px;
+    margin-top: 10px;
+}
+
+.right-section {
+    flex: 1;
+    padding-left: 10px;
+    text-align: right;
+}
+
+.right-section label {
+    display: block;
+}
+
+.right-section input {
+    width: 10%;
+    padding: 5px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
 .add-form h2 {
   font-size: 20px;
   color: #666666;

@@ -19,12 +19,12 @@ public class ReportController {
     private final ProductRepository productRepository;
 
 
-    @GetMapping("/{id}")
-    public ReportDataDTO getReportResponse(@PathVariable("id") Long productId) {
+    @GetMapping("/{id}-{weeksNumber}")
+    public ReportDataDTO getReportResponse(@PathVariable("id") Long productId, @PathVariable("weeksNumber") Integer weeksNumber) {
         if (!productRepository.existsById(productId)) {
             throw new CustomBadRequestException();
         }
 
-        return reportService.getReportDTO(productId, 18);
+        return reportService.getReportDTO(productId, weeksNumber);
     }
 }

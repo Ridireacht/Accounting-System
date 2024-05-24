@@ -22,11 +22,17 @@
 
 <h1 style="text-align: center;">Отчётность по наличию</h1>
 
-<div class="add-form" id="form">
-    <label for="product-id">Выберите препарат, для которого нужно произвести отчётность:</label><br>
-    <select id="product-id">
-        <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
-    </select><br><br>
+<div class="add-form-form" id="form">
+    <div class="left-section">
+        <label for="product-id">Выберите препарат, для которого нужно произвести отчётность:</label><br>
+        <select id="product-id">
+            <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
+        </select><br><br>
+    </div>
+    <div class="right-section">
+        <label for="weeks-number">За последние N недель:</label><br>
+        <input type="number" id="weeks-number" name="weeks-number" min="1" step="1" value="1"><br><br>
+    </div>
 </div>
 
 <div style="margin-top: 60px;"></div>
@@ -50,6 +56,7 @@
 
     function getPredictionData() {
         var productId = document.getElementById("product-id").value;
+        var weeksNumber = document.getElementById("weeks-number").value;
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -94,7 +101,7 @@
                 }
             }
         };
-        xhr.open('GET', '/report-product/' + productId);
+        xhr.open('GET', '/report-product/' + productId + '-' + weeksNumber);
         xhr.send();
     }
 
@@ -103,6 +110,10 @@
     });
 
     document.getElementById('product-id').addEventListener('change', function() {
+        getPredictionData();
+    });
+
+    document.getElementById('weeks-number').addEventListener('change', function() {
         getPredictionData();
     });
 
