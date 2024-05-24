@@ -5,6 +5,8 @@
   <title>Прогнозирование потребностей по препарату</title>
   <link rel="stylesheet" type="text/css" href="/css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <nav>
@@ -20,7 +22,7 @@
 
 <h1 style="text-align: center;">Прогнозирование потребностей по препарату</h1>
 
-<div class="add-form">
+<div class="add-form" id="form">
   <label for="product-id">Выберите препарат, для которого нужно произвести прогнозирование:</label><br>
   <select id="product-id">
     <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
@@ -40,6 +42,10 @@
 
 <div style="text-align: center;">
   <a href="/home" class="home-button">Домой</a>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+  <button id="download-pdf">Скачать отчёт</button>
 </div>
 
 <script>
@@ -98,6 +104,85 @@
 
   document.getElementById('product-id').addEventListener('change', function() {
     getPredictionData();
+  });
+
+  document.getElementById('download-pdf').addEventListener('click', function() {
+    const { jsPDF } = window.jspdf;
+    const content = document.getElementById('chart-container');
+    const canvas = document.getElementById('outflow-chart');
+    const nav = document.querySelector('nav');
+    const h1 = document.querySelector('h1');
+    const homeButton = document.querySelector('.home-button');
+    const downloadButton = document.getElementById('download-pdf');
+    const form = document.getElementById('form');
+    const selectedProductId = document.getElementById('product-id').value;
+
+    // Скрываем лишнее
+    nav.style.display = 'none';
+    homeButton.style.display = 'none';
+    downloadButton.style.display = 'none';
+    form.style.display = 'none';
+
+    // Получаем название выбранного препарата
+    const selectedProduct = document.querySelector('#product-id option:checked').textContent;
+
+    // Заменяем подпись отчёта
+    h1.innerHTML = `Отчётность по прогнозированию потребностей в препарате "${selectedProduct}"`;
+
+    // Увеличиваем график на всю страницу
+    const originalWidth = canvas.style.width;
+    const originalHeight = canvas.style.height;
+    content.style.width = '100%';
+    content.style.height = '100vh';
+    canvas.style.width = '100%';
+    canvas.style.height = '100vh';
+    myChart.resize();
+
+    // Отключаем стили background-color и border
+    const addFormElements = document.querySelectorAll('.add-form');
+    const originalStyles = [];
+    addFormElements.forEach(element => {
+        originalStyles.push({
+            backgroundColor: element.style.backgroundColor,
+            border: element.style.border
+        });
+        element.style.backgroundColor = 'none';
+        element.style.border = 'none';
+    });
+
+    // Захват содержимого страницы
+    html2canvas(document.body).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('report.pdf');
+
+        // Возвращаем оригинальную подпись
+        h1.innerHTML = `Прогнозирование потребностей по препарату`;
+
+        // Возвращаем скрытые элементы
+        nav.style.display = '';
+        homeButton.style.display = '';
+        downloadButton.style.display = '';
+        form.style.display = '';
+
+        // Возвращаем исходные размеры графика
+        content.style.width = '';
+        content.style.height = '';
+        canvas.style.width = originalWidth;
+        canvas.style.height = originalHeight;
+        myChart.resize();
+
+        // Восстанавливаем стили background-color и border
+        addFormElements.forEach((element, index) => {
+            element.style.backgroundColor = originalStyles[index].backgroundColor;
+            element.style.border = originalStyles[index].border;
+        });
+    });
   });
 </script>
 </body>
