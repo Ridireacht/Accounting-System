@@ -53,6 +53,12 @@
 
 <script>
   var myChart;
+  var colorIndex = 0;
+  var colors = [
+    '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231', '#911EB4', '#46F0F0', '#F032E6',
+    '#BCF60C', '#FABEBE', '#008080', '#E6BEFF', '#9A6324', '#FFFAC8', '#800000', '#AAFFC3',
+    '#808000', '#FFD8B1', '#000075', '#808080', '#000000'
+  ];
 
   function getPredictionData() {
       var productId = document.getElementById("category-id").value;
@@ -76,7 +82,7 @@
                       return {
                           label: productName,
                           data: response.outflowValuesLists[index],
-                          borderColor: getRandomColor(),
+                          borderColor: colors[colorIndex++ % colors.length],
                           tension: 0.1,
                           pointRadius: 3,  // начальный размер точек
                           pointHoverRadius: 5  // начальный размер точек при наведении
@@ -114,20 +120,9 @@
       xhr.send();
   }
 
-  function getRandomColor() {
-      var letters = '0123456789ABCDEF';
-      var color = '#';
-      for (var i = 0; i < 6; i++) {
-          color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-  }
-
-
   document.addEventListener("DOMContentLoaded", function() {
     getPredictionData();
   });
-
 
   document.getElementById('category-id').addEventListener('change', function() {
     getPredictionData();
