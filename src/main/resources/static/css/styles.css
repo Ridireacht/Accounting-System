@@ -231,28 +231,47 @@ th:hover {
   background-color: #ff1a1a;
 }
 
-.home-button {
-  background-color: #4a90e2;
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 14px;
-  margin-top: 100px;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-  font-family: Arial, sans-serif;
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.home-button, .download-button {
+    background-color: #4a90e2;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    font-family: Arial, sans-serif;
 }
 
 .home-button:hover {
-  background-color: #357ebd;
+    background-color: #357ebd;
 }
 
 .home-button:active {
-  background-color: #2b669a;
+    background-color: #2b669a;
+}
+
+.download-button {
+    background-color: #4caf50;
+}
+
+.download-button:hover {
+    background-color: #388e3c;
+}
+
+.download-button:active {
+    background-color: #2e7d32;
 }
 
 #searchInput {
