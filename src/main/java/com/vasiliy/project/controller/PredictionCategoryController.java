@@ -20,12 +20,12 @@ public class PredictionCategoryController {
   private final CategoryRepository categoryRepository;
 
 
-  @GetMapping("/{id}")
-  public PredictionCategoryDataDTO getPredictionResponse(@PathVariable("id") Long categoryId) {
+  @GetMapping("/{id}-{weeksNumber}")
+  public PredictionCategoryDataDTO getPredictionResponse(@PathVariable("id") Long categoryId, @PathVariable("weeksNumber") Integer weeksNumber) {
     if (!categoryRepository.existsById(categoryId)) {
       throw new CustomBadRequestException();
     }
 
-    return predictionCategoryService.getPredictionDTO(categoryId, 12);
+    return predictionCategoryService.getPredictionDTO(categoryId, weeksNumber);
   }
 }

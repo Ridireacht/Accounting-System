@@ -20,12 +20,12 @@ public class PredictionProductController {
   private final ProductRepository productRepository;
 
 
-  @GetMapping("/{id}")
-  public PredictionProductDataDTO getPredictionResponse(@PathVariable("id") Long productId) {
+  @GetMapping("/{id}-{weeksNumber}")
+  public PredictionProductDataDTO getPredictionResponse(@PathVariable("id") Long productId, @PathVariable("weeksNumber") Integer weeksNumber) {
     if (!productRepository.existsById(productId)) {
       throw new CustomBadRequestException();
     }
 
-    return predictionProductService.getPredictionDTO(productId, 12);
+    return predictionProductService.getPredictionDTO(productId, weeksNumber);
   }
 }
