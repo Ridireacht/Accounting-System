@@ -17,6 +17,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Service
 @AllArgsConstructor
@@ -28,17 +30,16 @@ public class ReportServiceImpl implements ReportService {
 
     private final ReportDataDTO reportDataDTO = new ReportDataDTO();
 
-
     @Override
     public ReportDataDTO getReportDTO(Long productId, Integer numberOfLastWeeks) {
         reportDataDTO.setLabels(new ArrayList<>());
         reportDataDTO.setOutflowValues(new ArrayList<>());
 
+        // Собираем значения для отчета
         collectOutflowValues(productId, numberOfLastWeeks);
 
         return reportDataDTO;
     }
-
 
     private void collectOutflowValues(Long productId, Integer numberOfLastWeeks) {
         int dayDifference;
@@ -47,13 +48,10 @@ public class ReportServiceImpl implements ReportService {
         List<Integer> writtenOffValues = new ArrayList<>();
         List<Integer> outflowValues = new ArrayList<>();
 
-
         // Определяем временные пределы, в которых собираются данные
         LocalDateTime endDateTime = LocalDateTime.now().plusDays(1).truncatedTo(ChronoUnit.DAYS);
-        LocalDateTime startDateTime = endDateTime.minusWeeks(numberOfLastWeeks).truncatedTo(ChronoUnit.DAYS);
-
+        LocalDateTime startDateTime = endDateTime.minusWeeks(adjustNumberOfLastWeeks(productId)).truncatedTo(ChronoUnit.DAYS);
         LocalDate startDate = startDateTime.toLocalDate();
-
 
         // Получаем записи о приходах конкретного товара в заданный период
         List<InflowRecord> inflowRecords = inflowRecordRepository.findAllByProductIdAndBetweenDates(productId, startDateTime, endDateTime);
@@ -64,55 +62,48 @@ public class ReportServiceImpl implements ReportService {
         // Получаем записи о списаниях конкретного товара в заданный период
         List<WrittenOffRecord> writtenOffRecords = writtenOffRecordRepository.findAllByProductIdAndBetweenDates(productId, startDateTime, endDateTime);
 
-
         // Инициализируем 4 списка, заполненные нулями
-        for (int i = 0; i < numberOfLastWeeks * 7; i++) {
+        for (int i = 0; i < adjustNumberOfLastWeeks(productId) * 7; i++) {
             inflowValues.add(0);
             soldValues.add(0);
             writtenOffValues.add(0);
             outflowValues.add(0);
         }
 
-
         // Проходимся по записям о приходе и дополняем список значениями
         for (InflowRecord obj : inflowRecords) {
             dayDifference = (int) ChronoUnit.DAYS.between(startDate, obj.getWrittenAt().toLocalDate());
-
             inflowValues.set(dayDifference, inflowValues.get(dayDifference) + obj.getQuantity().intValue());
-        }
-
-        // Проходимся по записям о списаниях и дополняем список значениями
-        for (WrittenOffRecord obj : writtenOffRecords) {
-            dayDifference = (int) ChronoUnit.DAYS.between(startDate, obj.getWrittenOffAt().toLocalDate());
-
-            soldValues.set(dayDifference, soldValues.get(dayDifference) + obj.getQuantity().intValue());
         }
 
         // Проходимся по записям о продажах и дополняем список значениями
         for (SoldRecord obj : soldRecords) {
             dayDifference = (int) ChronoUnit.DAYS.between(startDate, obj.getSoldAt().toLocalDate());
+            soldValues.set(dayDifference, soldValues.get(dayDifference) + obj.getQuantity().intValue());
+        }
 
+        // Проходимся по записям о списаниях и дополняем список значениями
+        for (WrittenOffRecord obj : writtenOffRecords) {
+            dayDifference = (int) ChronoUnit.DAYS.between(startDate, obj.getWrittenOffAt().toLocalDate());
             writtenOffValues.set(dayDifference, writtenOffValues.get(dayDifference) + obj.getQuantity().intValue());
         }
 
-
+        // Рассчитываем значения остатка на складе
         for (int i = 0; i < outflowValues.size(); i++) {
             if (i == 0) {
                 outflowValues.set(0, inflowValues.get(0) - soldValues.get(0) - writtenOffValues.get(0));
-            }
-
-            else {
+            } else {
                 // Переносим с прошлого дня
                 outflowValues.set(i, outflowValues.get(i - 1));
-
                 outflowValues.set(i, outflowValues.get(i) + inflowValues.get(i) - soldValues.get(i) - writtenOffValues.get(i));
             }
         }
 
-
-        // Сразу записываем результаты в респонс
-        reportDataDTO.setOutflowValues(outflowValues);
-
+        // Сокращаем списки до нужного количества недель
+        int requiredDays = numberOfLastWeeks * 7;
+        if (outflowValues.size() > requiredDays) {
+            outflowValues = outflowValues.subList(outflowValues.size() - requiredDays, outflowValues.size());
+        }
 
         // Генерируем labels
         LocalDate endDate = endDateTime.toLocalDate().minusDays(1);
@@ -123,5 +114,27 @@ public class ReportServiceImpl implements ReportService {
             reportDataDTO.getLabels().add(currentDate.format(formatter));
             currentDate = currentDate.plusDays(1);
         }
+
+        // Записываем результаты в респонс
+        reportDataDTO.setOutflowValues(outflowValues);
+    }
+
+    private Integer adjustNumberOfLastWeeks(Long productId) {
+        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
+
+        // Находим самые ранние даты для всех типов записей
+        LocalDateTime earliestInflowDate = inflowRecordRepository.findEarliestDateByProductId(productId);
+        LocalDateTime earliestSoldDate = soldRecordRepository.findEarliestDateByProductId(productId);
+        LocalDateTime earliestWrittenOffDate = writtenOffRecordRepository.findEarliestDateByProductId(productId);
+
+        // Определяем самую раннюю дату среди всех типов записей
+        LocalDateTime earliestDate = Stream.of(earliestInflowDate, earliestSoldDate, earliestWrittenOffDate)
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(now);
+
+        // Рассчитываем необходимое количество недель
+        long totalDays = ChronoUnit.DAYS.between(earliestDate, now);
+        return (int) Math.ceil((double) totalDays / 7);
     }
 }

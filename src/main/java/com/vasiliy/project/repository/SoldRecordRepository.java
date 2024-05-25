@@ -17,4 +17,7 @@ public interface SoldRecordRepository extends JpaRepository<SoldRecord, Long> {
       @Param("productId") Long productId,
       @Param("startDate") LocalDateTime startDate,
       @Param("endDate") LocalDateTime endDate);
+
+  @Query("SELECT MIN(sr.soldAt) FROM SoldRecord sr WHERE sr.storageProduct.product.id = :productId")
+  LocalDateTime findEarliestDateByProductId(@Param("productId") Long productId);
 }

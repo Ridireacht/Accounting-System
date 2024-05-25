@@ -17,4 +17,7 @@ public interface WrittenOffRecordRepository extends JpaRepository<WrittenOffReco
       @Param("productId") Long productId,
       @Param("startDate") LocalDateTime startDate,
       @Param("endDate") LocalDateTime endDate);
+
+  @Query("SELECT MIN(wr.writtenOffAt) FROM WrittenOffRecord wr WHERE wr.storageProduct.product.id = :productId")
+  LocalDateTime findEarliestDateByProductId(@Param("productId") Long productId);
 }

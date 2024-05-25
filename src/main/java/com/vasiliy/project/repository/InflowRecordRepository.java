@@ -17,4 +17,7 @@ public interface InflowRecordRepository extends JpaRepository<InflowRecord, Long
             @Param("productId") Long productId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT MIN(ir.writtenAt) FROM InflowRecord ir WHERE ir.storageProduct.product.id = :productId")
+    LocalDateTime findEarliestDateByProductId(@Param("productId") Long productId);
 }
