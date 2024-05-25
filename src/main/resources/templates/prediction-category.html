@@ -77,7 +77,9 @@
                           label: productName,
                           data: response.outflowValuesLists[index],
                           borderColor: getRandomColor(),
-                          tension: 0.1
+                          tension: 0.1,
+                          pointRadius: 3,  // начальный размер точек
+                          pointHoverRadius: 5  // начальный размер точек при наведении
                       };
                   });
 
@@ -135,6 +137,16 @@
     getPredictionData();
   });
 
+  function updateChartPoints(showPoints) {
+      if (myChart && myChart.data.datasets) {
+          myChart.data.datasets.forEach(dataset => {
+              dataset.pointRadius = showPoints ? 3 : 0;  // размер точек (0 - точки не отображаются)
+              dataset.pointHoverRadius = showPoints ? 5 : 0; // размер точек при наведении (0 - точки не отображаются)
+          });
+          myChart.update();
+      }
+  }
+
   document.getElementById('download-pdf').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const content = document.getElementById('chart-container');
@@ -145,6 +157,9 @@
     const downloadButton = document.getElementById('download-pdf');
     const form = document.getElementById('form');
     const selectedCategoryId = document.getElementById('category-id').value;
+
+    // Скрываем точки на линиях графика
+    updateChartPoints(false);
 
     // Скрываем лишнее
     nav.style.display = 'none';
@@ -179,39 +194,44 @@
         element.style.border = 'none';
     });
 
-    // Захват содержимого страницы
-    html2canvas(document.body).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    // Добавляем задержку перед захватом содержимого страницы
+    setTimeout(() => {
+      html2canvas(document.body).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('report.pdf');
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save('report.pdf');
 
-        // Возвращаем оригинальную подпись
-        h1.innerHTML = `Прогнозирование потребностей по фармакологической группе`;
+          // Возвращаем оригинальную подпись
+          h1.innerHTML = `Прогнозирование потребностей по фармакологической группе`;
 
-        // Возвращаем скрытые элементы
-        nav.style.display = '';
-        homeButton.style.display = '';
-        downloadButton.style.display = '';
-        form.style.display = '';
+          // Возвращаем точки на линиях графика
+          updateChartPoints(true);
 
-        // Возвращаем исходные размеры графика
-        content.style.width = '';
-        content.style.height = '';
-        canvas.style.width = originalWidth;
-        canvas.style.height = originalHeight;
-        myChart.resize();
+          // Возвращаем скрытые элементы
+          nav.style.display = '';
+          homeButton.style.display = '';
+          downloadButton.style.display = '';
+          form.style.display = '';
 
-        // Восстанавливаем стили background-color и border
-        addFormElements.forEach((element, index) => {
-            element.style.backgroundColor = originalStyles[index].backgroundColor;
-            element.style.border = originalStyles[index].border;
-        });
-    });
+          // Возвращаем исходные размеры графика
+          content.style.width = '';
+          content.style.height = '';
+          canvas.style.width = originalWidth;
+          canvas.style.height = originalHeight;
+          myChart.resize();
+
+          // Восстанавливаем стили background-color и border
+          addFormElements.forEach((element, index) => {
+              element.style.backgroundColor = originalStyles[index].backgroundColor;
+              element.style.border = originalStyles[index].border;
+          });
+      });
+    }, 1000); // задержка в 10 мс
   });
 </script>
 </body>
