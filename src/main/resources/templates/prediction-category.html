@@ -44,6 +44,8 @@
   <div id="chart-container">
     <canvas id="outflow-chart"></canvas>
   </div>
+  <br><br><br>
+  <div id="product-predictions"></div>
 </div>
 
 <div class="button-container">
@@ -68,8 +70,8 @@
           if (xhr.readyState === XMLHttpRequest.DONE) {
               if (xhr.status === 200) {
                   var response = JSON.parse(xhr.responseText);
-                  document.getElementById('nextWeekOutflowPrediction').textContent = response.nextWeekOutflowPrediction.toFixed(2);
-                  document.getElementById('nextMonthOutflowPrediction').textContent = response.nextMonthOutflowPrediction.toFixed(2);
+                  document.getElementById('nextWeekOutflowPrediction').textContent = response.nextWeekOutflowPredictions[0].toFixed(2);
+                  document.getElementById('nextMonthOutflowPrediction').textContent = response.nextMonthOutflowPredictions[0].toFixed(2);
 
                   if (window.myChart) {
                       myChart.destroy();
@@ -109,6 +111,20 @@
                               }
                           }
                       }
+                  });
+
+                  // Добавляем данные о прогнозах для каждого препарата
+                  var productPredictionsContainer = document.getElementById('product-predictions');
+                  productPredictionsContainer.innerHTML = ''; // Очищаем контейнер
+                  response.productNames.forEach((productName, index) => {
+                          var productPredictionElement = document.createElement('div');
+                          productPredictionElement.innerHTML = `
+                              <p><strong>${productName}:</strong></p>
+                              <p>Прогноз расхода на следующую неделю: ${response.nextWeekOutflowPredictions[index+1].toFixed(2)} штук</p>
+                              <p>Прогноз расхода на следующий месяц: ${response.nextMonthOutflowPredictions[index+1].toFixed(2)} штук</p>
+                              <br><br>
+                          `;
+                          productPredictionsContainer.appendChild(productPredictionElement);
                   });
 
               } else {

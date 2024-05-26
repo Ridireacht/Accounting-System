@@ -149,8 +149,8 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
 
         predictionCategoryDataDTO.setLabels(new ArrayList<>());
         predictionCategoryDataDTO.setOutflowValuesLists(new ArrayList<>());
-        predictionCategoryDataDTO.setNextWeekOutflowPrediction(null);
-        predictionCategoryDataDTO.setNextMonthOutflowPrediction(null);
+        predictionCategoryDataDTO.setNextWeekOutflowPredictions(new ArrayList<>());
+        predictionCategoryDataDTO.setNextMonthOutflowPredictions(new ArrayList<>());
 
 
         // Собираем данные о расходе товара за последние numberOfLastWeeks недель
@@ -159,8 +159,8 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
 
         // Если список пустой, то и анализировать нечего
         if (outflowValues.isEmpty()) {
-            predictionCategoryDataDTO.setNextWeekOutflowPrediction(0.0);
-            predictionCategoryDataDTO.setNextMonthOutflowPrediction(0.0);
+            predictionCategoryDataDTO.getNextWeekOutflowPredictions().add(0.0);
+            predictionCategoryDataDTO.getNextMonthOutflowPredictions().add(0.0);
 
             predictionCategoryDataDTO.setLabels(new ArrayList<>());
             predictionCategoryDataDTO.setProductNames(new ArrayList<>());
@@ -183,6 +183,11 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
             weekOutflowValues.add(currentOutflowValue);
         }
 
+
+        // Проводим прогнозирование фармакологической группы на следующую неделю
+        predictionCategoryDataDTO.getNextWeekOutflowPredictions().add(getNextWeekPrediction(weekOutflowValues));
+
+
         // Собираем список расхода товаров по месяцам.
         // Проход по месяцам
         for (int i = 0; i < weekOutflowValues.size() / 4; i++) {
@@ -197,15 +202,57 @@ public class PredictionCategoryServiceImpl implements PredictionCategoryService 
         }
 
 
-        // Проводим прогнозирование на следующую неделю
-        predictionCategoryDataDTO.setNextWeekOutflowPrediction(getNextWeekPrediction(weekOutflowValues));
-
-
-        // Проводим прогнозирование на следующий месяц (если накопилось данных хотя бы на месяц)
+        // Проводим прогнозирование фармакологической группы на следующий месяц (если накопилось данных хотя бы на месяц)
         if (!monthOutflowValues.isEmpty()) {
-            predictionCategoryDataDTO.setNextMonthOutflowPrediction(getNextMonthPrediction(monthOutflowValues));
+            predictionCategoryDataDTO.getNextMonthOutflowPredictions().add(getNextMonthPrediction(monthOutflowValues));
         } else {
-            predictionCategoryDataDTO.setNextMonthOutflowPrediction(0.0);
+            predictionCategoryDataDTO.getNextMonthOutflowPredictions().add(0.0);
+        }
+
+
+        // Проводим прогнозирование по каждому препарату
+        for(List<Integer> outflowValuesList : predictionCategoryDataDTO.getOutflowValuesLists()) {
+            List<Integer> weekOutflowValuesProduct = new ArrayList<>();
+            List<Integer> monthOutflowValuesProduct = new ArrayList<>();
+
+
+            // Собираем список расхода препарата по неделям.
+            // Проход по неделям
+            for (int i = 0; i < outflowValuesList.size() / 7; i++) {
+                currentOutflowValue = 0;
+
+                // Проход по дням в неделе
+                for (int j = 0; j < 7; j++) {
+                    currentOutflowValue += outflowValuesList.get(i * 7 + j);
+                }
+
+                weekOutflowValuesProduct.add(currentOutflowValue);
+            }
+
+            // Делаем прогноз препарата на следующую неделю
+            predictionCategoryDataDTO.getNextWeekOutflowPredictions().add(getNextWeekPrediction(weekOutflowValuesProduct));
+
+
+            // Собираем список расхода препарата по месяцам.
+            // Проход по месяцам
+            for (int i = 0; i < weekOutflowValuesProduct.size() / 4; i++) {
+                currentOutflowValue = 0;
+
+                // Проход по неделям в месяце
+                for (int j = 0; j < 4; j++) {
+                    currentOutflowValue += weekOutflowValuesProduct.get(i * 4 + j);
+                }
+
+                monthOutflowValuesProduct.add(currentOutflowValue);
+            }
+
+
+            // Проводим прогнозирование препарата на следующий месяц (если накопилось данных хотя бы на месяц)
+            if (!monthOutflowValuesProduct.isEmpty()) {
+                predictionCategoryDataDTO.getNextMonthOutflowPredictions().add(getNextMonthPrediction(monthOutflowValuesProduct));
+            } else {
+                predictionCategoryDataDTO.getNextMonthOutflowPredictions().add(0.0);
+            }
         }
 
 

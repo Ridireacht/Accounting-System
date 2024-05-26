@@ -8,8 +8,8 @@ import java.util.List;
 @Getter
 @Setter
 public class PredictionCategoryDataDTO {
-    private Double nextWeekOutflowPrediction;
-    private Double nextMonthOutflowPrediction;
+    private List<Double> nextWeekOutflowPredictions;
+    private List<Double> nextMonthOutflowPredictions;
 
     private List<String> labels;
     private List<String> productNames;
